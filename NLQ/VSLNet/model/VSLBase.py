@@ -12,6 +12,8 @@ from model.layers import (
     CQConcatenate,
     ConditionedPredictor,
     BertEmbedding,
+    HighLightLayer
+
 )
 
 
