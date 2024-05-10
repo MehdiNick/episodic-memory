@@ -11,9 +11,8 @@ from model.layers import (
     CQAttention,
     CQConcatenate,
     ConditionedPredictor,
+    HighLightLayer,
     BertEmbedding,
-    HighLightLayer
-
 )
 
 
@@ -127,8 +126,6 @@ class VSLBase(nn.Module):
         video_features = self.feature_encoder(video_features, mask=v_mask)
         features = self.cq_attention(video_features, query_features, v_mask, q_mask)
         features = self.cq_concat(features, query_features, q_mask)
-        h_score = self.highlight_layer(features, v_mask)
-        features = features * h_score.unsqueeze(2)
         start_logits, end_logits = self.predictor(features, mask=v_mask)
         return h_score, start_logits, end_logits
 
@@ -137,10 +134,7 @@ class VSLBase(nn.Module):
             start_logits=start_logits, end_logits=end_logits
         )
 
-    def compute_highlight_loss(self, scores, labels, mask):
-        return self.highlight_layer.compute_loss(
-            scores=scores, labels=labels, mask=mask
-        )
+
 
     def compute_loss(self, start_logits, end_logits, start_labels, end_labels):
         return self.predictor.compute_cross_entropy_loss(
