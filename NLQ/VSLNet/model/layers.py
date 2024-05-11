@@ -315,11 +315,42 @@ class MultiHeadAttentionBlock(nn.Module):
         return output
 
 
-class FeatureEncoder(nn.Module):
+class TextFeatureEncoder(nn.Module):
     def __init__(
         self, dim, num_heads, max_pos_len, kernel_size=7, num_layers=4, drop_rate=0.0
     ):
-        super(FeatureEncoder, self).__init__()
+        super(TextFeatureEncoder, self).__init__()
+        self.pos_embedding = PositionalEmbedding(
+            num_embeddings=max_pos_len, embedding_dim=dim
+        )
+        self.conv_block = DepthwiseSeparableConvBlock(
+            dim=dim, kernel_size=kernel_size, drop_rate=drop_rate, num_layers=num_layers
+        )
+        self.attention_block = MultiHeadAttentionBlock(
+            dim=dim, num_heads=num_heads, drop_rate=drop_rate
+        )
+        # Add a Transformer layer
+        self.transformer_layer = nn.TransformerEncoder(
+            nn.TransformerEncoderLayer(d_model=dim, nhead=num_heads),
+            num_layers=num_layers,
+        )
+
+    def forward(self, x, mask=None):
+        features = x + self.pos_embedding(x)  # (batch_size, seq_len, dim)
+        features = self.conv_block(features)  # (batch_size, seq_len, dim)
+        features = self.attention_block(
+            features, mask=mask
+        )  # (batch_size, seq_len, dim)
+        # Pass the features through the Transformer layer
+        features = self.transformer_layer(features)
+        return features
+
+
+class VideoFeatureEncoder(nn.Module):
+    def __init__(
+        self, dim, num_heads, max_pos_len, kernel_size=7, num_layers=4, drop_rate=0.0
+    ):
+        super(VideoFeatureEncoder, self).__init__()
         self.pos_embedding = PositionalEmbedding(
             num_embeddings=max_pos_len, embedding_dim=dim
         )
@@ -337,6 +368,7 @@ class FeatureEncoder(nn.Module):
             features, mask=mask
         )  # (batch_size, seq_len, dim)
         return features
+
 
 
 class CQAttention(nn.Module):
