@@ -284,8 +284,11 @@ def dataset_gen_bert(data, vfeat_lens, tokenizer, max_pos_len, scope, num_worker
     sorted_worker_id = sorted(collated_results.keys())
     for worker_id in sorted_worker_id:
         dataset.extend(collated_results[worker_id])
+    for dataaa in dataset:
+        print(dataaa)
+        break    
     return dataset
-
+    
 
 def gen_or_load_dataset(configs):
     if not os.path.exists(configs.save_dir):
